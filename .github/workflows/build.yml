@@ -8,7 +8,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.7.1'
@@ -17,6 +17,8 @@ jobs:
           git clone --depth 1 https://github.com/tiann/KernelSU.git ksu
           cd ksu
           git apply --verbose ../ytroot.patch || patch -p1 < ../ytroot.patch
+          sed -i 's/JavaVersion.VERSION_17/JavaVersion.VERSION_21/g' manager/build.gradle.kts
+          grep -n "Compatibility" manager/build.gradle.kts
       - name: sdk
         run: |
           SDKM=$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager
@@ -27,7 +29,6 @@ jobs:
           cd ksu/manager
           gradle assembleDebug --no-daemon > /tmp/build.log 2>&1 || true
           tail -70 /tmp/build.log
-          cp /tmp/build.log /tmp/../build.log 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
