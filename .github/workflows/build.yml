@@ -5,10 +5,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: unzip source
+      - name: prepare
         run: |
           python3 -c "import zipfile;zipfile.ZipFile('src.zip').extractall('.')"
           rm -f local.properties
+          sed -i 's/\r$//' gradlew
+          chmod +x gradlew
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -20,9 +22,8 @@ jobs:
           $SDKM "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018"
       - name: build
         run: |
-          chmod +x gradlew
           ./gradlew assembleDebug --no-daemon >build.log 2>&1 || true
-          tail -60 build.log
+          tail -80 build.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
