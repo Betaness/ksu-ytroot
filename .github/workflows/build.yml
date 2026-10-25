@@ -18,17 +18,19 @@ jobs:
           cd ksu
           git apply --verbose ../ytroot.patch || patch -p1 < ../ytroot.patch
           sed -i 's/JavaVersion.VERSION_17/JavaVersion.VERSION_21/g' manager/build.gradle.kts
-          grep -n "Compatibility" manager/build.gradle.kts
+          sed -i 's/extra\["androidCompileSdkVersion"\] = 35/extra["androidCompileSdkVersion"] = 37/' manager/build.gradle.kts
+          sed -i 's/extra\["androidBuildToolsVersion"\] = "35.0.0"/extra["androidBuildToolsVersion"] = "35.0.0"/' manager/build.gradle.kts
+          grep -n "CompileSdk\|TargetSdk\|BuildTools" manager/build.gradle.kts
       - name: sdk
         run: |
           SDKM=$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager
           yes | $SDKM --licenses >/dev/null 2>&1 || true
-          $SDKM "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018"
+          $SDKM "platforms;android-37" "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018" || $SDKM "platforms;android-37.2" "build-tools;35.0.0" "ndk;27.2.12479018"
       - name: build
         run: |
           cd ksu/manager
           gradle assembleDebug --no-daemon > /tmp/build.log 2>&1 || true
-          tail -70 /tmp/build.log
+          tail -50 /tmp/build.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
