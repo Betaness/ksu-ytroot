@@ -19,13 +19,28 @@ jobs:
           git apply --verbose ../ytroot.patch || patch -p1 < ../ytroot.patch
           sed -i 's/JavaVersion.VERSION_17/JavaVersion.VERSION_21/g' manager/build.gradle.kts
           sed -i 's/extra\["androidCompileSdkVersion"\] = 35/extra["androidCompileSdkVersion"] = 37/' manager/build.gradle.kts
+          sed -i 's/extra\["androidCompileSdkVersionMinor"\] = 0/extra["androidCompileSdkVersionMinor"] = 2/' manager/build.gradle.kts
           sed -i 's/"27.2.12479018"/"29.0.14206865"/' manager/build.gradle.kts
-          grep -n "CompileSdk\|NdkVersion" manager/build.gradle.kts
+          python3 - <<PYEOF
+import re,io
+p='manager/app/build.gradle.kts'
+s=open(p).read()
+s=s.replace('compileSdk = androidCompileSdkVersion',
+'''compileSdk {
+        version = release(androidCompileSdkVersion) {
+            minorApiLevel = androidCompileSdkVersionMinor
+        }
+    }''')
+open(p,'w').write(s)
+print('compileSdk block restored')
+PYEOF
+          grep -n "CompileSdk\|NdkVersion" manager/build.gradle.kts | head
       - name: sdk
         run: |
           SDKM=$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager
           yes | $SDKM --licenses >/dev/null 2>&1 || true
-          $SDKM "platforms;android-37" "build-tools;35.0.0" "ndk;29.0.14206865"
+          $SDKM --list 2>/dev/null | grep -E "platforms;android-37" | head -5
+          $SDKM "platforms;android-37.2" "build-tools;35.0.0" "ndk;29.0.14206865"
       - name: build
         run: |
           cd ksu/manager
