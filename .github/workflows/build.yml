@@ -12,11 +12,11 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.7.1'
-      - name: prepare
+      - name: clone and patch
         run: |
-          python3 -c "import zipfile;z=zipfile.ZipFile('src.zip');z.extractall('.');print('extracted',len(z.namelist()))"
-          rm -f local.properties
-          ls gradle/wrapper
+          git clone --depth 1 https://github.com/tiann/KernelSU.git ksu
+          cd ksu
+          git apply --verbose ../ytroot.patch || patch -p1 < ../ytroot.patch
       - name: sdk
         run: |
           SDKM=$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager
@@ -24,12 +24,14 @@ jobs:
           $SDKM "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018"
       - name: build
         run: |
-          gradle assembleDebug --no-daemon >build.log 2>&1 || true
-          tail -60 build.log
+          cd ksu/manager
+          gradle assembleDebug --no-daemon > /tmp/build.log 2>&1 || true
+          tail -70 /tmp/build.log
+          cp /tmp/build.log /tmp/../build.log 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: out
           path: |
-            build.log
-            app/build/outputs/apk/debug/*.apk
+            /tmp/build.log
+            ksu/manager/app/build/outputs/apk/debug/*.apk
