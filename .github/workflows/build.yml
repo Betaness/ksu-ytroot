@@ -7,8 +7,16 @@ jobs:
       - uses: actions/checkout@v4
       - name: prepare
         run: |
-          python3 -c "import zipfile;zipfile.ZipFile('src.zip').extractall('.')"
+          python3 - <<PYEOF
+import zipfile
+z = zipfile.ZipFile('src.zip')
+names = z.namelist()
+print('entries:', len(names))
+print([n for n in names if 'wrapper' in n])
+z.extractall('.')
+PYEOF
           rm -f local.properties
+          ls -la gradle/wrapper || true
           sed -i 's/\r$//' gradlew
           chmod +x gradlew
       - uses: actions/setup-java@v4
@@ -22,8 +30,8 @@ jobs:
           $SDKM "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018"
       - name: build
         run: |
-          ./gradlew assembleDebug --no-daemon >build.log 2>&1 || true
-          tail -80 build.log
+          sh ./gradlew assembleDebug --no-daemon >build.log 2>&1 || true
+          tail -60 build.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
