@@ -5,32 +5,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: prepare
-        run: |
-          python3 - <<PYEOF
-import zipfile
-z = zipfile.ZipFile('src.zip')
-names = z.namelist()
-print('entries:', len(names))
-print([n for n in names if 'wrapper' in n])
-z.extractall('.')
-PYEOF
-          rm -f local.properties
-          ls -la gradle/wrapper || true
-          sed -i 's/\r$//' gradlew
-          chmod +x gradlew
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-      - name: sdk components
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.7.1'
+      - name: prepare
+        run: |
+          python3 -c "import zipfile;z=zipfile.ZipFile('src.zip');z.extractall('.');print('extracted',len(z.namelist()))"
+          rm -f local.properties
+          ls gradle/wrapper
+      - name: sdk
         run: |
           SDKM=$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager
           yes | $SDKM --licenses >/dev/null 2>&1 || true
           $SDKM "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018"
       - name: build
         run: |
-          sh ./gradlew assembleDebug --no-daemon >build.log 2>&1 || true
+          gradle assembleDebug --no-daemon >build.log 2>&1 || true
           tail -60 build.log
       - uses: actions/upload-artifact@v4
         if: always()
