@@ -7,8 +7,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: unzip source
         run: |
-          unzip -q src.zip -d .
+          ls -la
+          python3 -c "import zipfile;zipfile.ZipFile('src.zip').extractall('.')"
           rm -f local.properties
+          ls -la | head -20
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
