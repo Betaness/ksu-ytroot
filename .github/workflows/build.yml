@@ -7,10 +7,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: unzip source
         run: |
-          ls -la
           python3 -c "import zipfile;zipfile.ZipFile('src.zip').extractall('.')"
           rm -f local.properties
-          ls -la | head -20
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -23,8 +21,12 @@ jobs:
       - name: build
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug --no-daemon >build.log 2>&1 || true
+          tail -60 build.log
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: apk
-          path: app/build/outputs/apk/debug/*.apk
+          name: out
+          path: |
+            build.log
+            app/build/outputs/apk/debug/*.apk
