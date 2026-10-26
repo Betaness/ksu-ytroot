@@ -191,6 +191,7 @@ fun HomePagerMiuix(
 
 @Composable
 private fun TempRootCard() {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val msg = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("点一下执行临时 root") }
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -205,7 +206,7 @@ private fun TempRootCard() {
                     val main = android.os.Handler(android.os.Looper.getMainLooper())
                     Thread {
                         val txt = try {
-                            val pb = ProcessBuilder("/system/bin/su", "-c", "sh /data/local/tmp/ytroot")
+                            val pb = ProcessBuilder(context.filesDir.absolutePath + "/su", "-c", "sh /data/local/tmp/ytroot")
                             pb.redirectErrorStream(true)
                             val p = pb.start()
                             val out = p.inputStream.bufferedReader().readText()
