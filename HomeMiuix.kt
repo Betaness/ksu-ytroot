@@ -164,10 +164,6 @@ fun HomePagerMiuix(
                         if (state.showRootWarning) {
                             WarningCard(stringResource(id = R.string.grant_root_failed))
                         }
-                        StatusCard(
-                            state = state,
-                            actions = actions,
-                        )
                         InfoCard(
                             systemInfo = state.systemInfo,
                             modifier = Modifier.fillMaxWidth(),
