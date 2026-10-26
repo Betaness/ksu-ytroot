@@ -14,16 +14,16 @@ jobs:
           gradle-version: '9.7.1'
       - name: clone and patch
         run: |
+          sed -i 's/\r$//' ytroot.patch
           git clone --depth 1 https://github.com/tiann/KernelSU.git ksu
           cd ksu
-          git apply --verbose ../ytroot.patch || patch -p1 < ../ytroot.patch
+          git apply --verbose --ignore-whitespace ../ytroot.patch
           sed -i 's/extra\["androidCompileSdkVersionMinor"\] = 0/extra["androidCompileSdkVersionMinor"] = 2/' manager/build.gradle.kts
           grep -n "CompileSdk\|NdkVersion\|Compatibility" manager/build.gradle.kts
       - name: sdk
         run: |
           SDKM=$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager
           yes | $SDKM --licenses >/dev/null 2>&1 || true
-          $SDKM --list 2>/dev/null | grep -E "platforms;android-37" | sort -u | head -5
           $SDKM "platforms;android-37.2" "build-tools;35.0.0" "ndk;29.0.14206865"
           ls $ANDROID_HOME/platforms
       - name: build
