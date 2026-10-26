@@ -189,39 +189,45 @@ fun HomePagerMiuix(
     }
 }
 
+private fun rootdExec(cmd: String): String {
+    return try {
+        val s = android.net.LocalSocket()
+        s.connect(android.net.LocalSocketAddress("/data/local/tmp/pc98260-root.sock",
+            android.net.LocalSocketAddress.Namespace.FILESYSTEM))
+        val out = s.outputStream
+        val b = cmd.toByteArray()
+        out.write(java.nio.ByteBuffer.allocate(4).order(java.nio.ByteOrder.LITTLE_ENDIAN).putInt(b.size).array())
+        out.write(b); out.flush()
+        try { s.shutdownOutput() } catch (e: Exception) {}
+        val text = s.inputStream.bufferedReader().readText()
+        s.close()
+        text
+    } catch (e: Exception) { "err: " + e.message }
+}
+
 @Composable
 private fun TempRootCard() {
-    val msg = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("\u70b9\u4e00\u4e0b\u6267\u884c\u4e34\u65f6 root") }
+    val msg = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("??????? root") }
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = "\u4e34\u65f6 Root", style = MiuixTheme.textStyles.title4)
+            Text(text = "?? Root", style = MiuixTheme.textStyles.title4)
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = msg.value, style = MiuixTheme.textStyles.body2)
             Spacer(modifier = Modifier.height(12.dp))
             TextButton(
-                text = "\u4e00\u952e\u4e34\u65f6 root",
+                text = "???? root",
                 onClick = {
                     val main = android.os.Handler(android.os.Looper.getMainLooper())
-                    try {
-                        if (rikka.shizuku.Shizuku.checkSelfPermission() != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                            rikka.shizuku.Shizuku.requestPermission(1)
-                            msg.value = "\u5df2\u8bf7\u6c42 Shizuku \u6388\u6743\uff0c\u5141\u8bb8\u540e\u518d\u70b9"
-                        } else {
-                            msg.value = "\u6267\u884c\u4e2d\u2026"
-                            Thread {
-                                val txt = try {
-                                    val m = rikka.shizuku.Shizuku::class.java.getDeclaredMethod(
-                                        "newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java)
-                                    m.isAccessible = true
-                                    val p = m.invoke(null, arrayOf("sh", "/data/local/tmp/ytroot"), null, null) as Process
-                                    val out = p.inputStream.bufferedReader().readText()
-                                    p.waitFor()
-                                    if (p.exitValue() == 0) "READY" else "rc=" + p.exitValue() + " " + out.takeLast(80)
-                                } catch (e: Exception) { "err: " + e.message }
-                                main.post { msg.value = txt }
-                            }.start()
+                    msg.value = "????"
+                    Thread {
+                        val r = rootdExec("sh /data/local/tmp/ytroot; echo RC=$?")
+                        val txt = when {
+                            r.contains("RC=0") -> "READY"
+                            r.startsWith("err:") -> r
+                            else -> r.takeLast(90)
                         }
-                    } catch (e: Exception) { msg.value = "err: " + e.message }
+                        main.post { msg.value = txt }
+                    }.start()
                 }
             )
         }
