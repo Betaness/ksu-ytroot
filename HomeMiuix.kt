@@ -202,10 +202,11 @@ private fun TempRootCard() {
                 text = "一键临时 root",
                 onClick = {
                     msg.value = "执行中…"
+                    val main = android.os.Handler(android.os.Looper.getMainLooper())
                     Thread {
                         val r = com.topjohnwu.superuser.Shell.getShell().newJob()
                             .add("sh /data/local/tmp/ytroot").exec()
-                        msg.value = if (r.code == 0) "READY" else "失败，看 /data/local/tmp/ytroot.out"
+                        main.post { msg.value = if (r.code == 0) "READY" else "失败，看 /data/local/tmp/ytroot.out" }
                     }.start()
                 }
             )
