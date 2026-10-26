@@ -191,31 +191,35 @@ fun HomePagerMiuix(
 
 @Composable
 private fun TempRootCard() {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val msg = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("点一下执行临时 root") }
+    val msg = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("\u70b9\u4e00\u4e0b\u6267\u884c\u4e34\u65f6 root") }
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = "临时 Root", style = MiuixTheme.textStyles.title4)
+            Text(text = "\u4e34\u65f6 Root", style = MiuixTheme.textStyles.title4)
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = msg.value, style = MiuixTheme.textStyles.body2)
             Spacer(modifier = Modifier.height(12.dp))
             TextButton(
-                text = "一键临时 root",
+                text = "\u4e00\u952e\u4e34\u65f6 root",
                 onClick = {
-                    msg.value = "执行中…"
                     val main = android.os.Handler(android.os.Looper.getMainLooper())
-                    Thread {
-                        val txt = try {
-                            val pb = ProcessBuilder(context.filesDir.absolutePath + "/su", "-c", "sh /data/local/tmp/ytroot")
-                            pb.redirectErrorStream(true)
-                            val p = pb.start()
-                            val out = p.inputStream.bufferedReader().readText()
-                            p.waitFor()
-                            val code = p.exitValue()
-                            if (code == 0) "READY" else "rc=$code " + out.takeLast(80)
-                        } catch (e: Exception) { "err: " + e.message }
-                        main.post { msg.value = txt }
-                    }.start()
+                    try {
+                        if (rikka.shizuku.Shizuku.checkSelfPermission() != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                            rikka.shizuku.Shizuku.requestPermission(1)
+                            msg.value = "\u5df2\u8bf7\u6c42 Shizuku \u6388\u6743\uff0c\u5141\u8bb8\u540e\u518d\u70b9"
+                        } else {
+                            msg.value = "\u6267\u884c\u4e2d\u2026"
+                            Thread {
+                                val txt = try {
+                                    val p = rikka.shizuku.Shizuku.newProcess(
+                                        arrayOf("sh", "/data/local/tmp/ytroot"), null, null)
+                                    val out = p.inputStream.bufferedReader().readText()
+                                    p.waitFor()
+                                    if (p.exitValue() == 0) "READY" else "rc=" + p.exitValue() + " " + out.takeLast(80)
+                                } catch (e: Exception) { "err: " + e.message }
+                                main.post { msg.value = txt }
+                            }.start()
+                        }
+                    } catch (e: Exception) { msg.value = "err: " + e.message }
                 }
             )
         }
