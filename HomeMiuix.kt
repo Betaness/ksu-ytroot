@@ -207,15 +207,15 @@ private fun rootdExec(cmd: String): String {
 
 @Composable
 private fun TempRootCard() {
-    val msg = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("??????? root") }
+    val msg = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("点一下执行临时 root") }
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = "?? Root", style = MiuixTheme.textStyles.title4)
+            Text(text = "临时 Root", style = MiuixTheme.textStyles.title4)
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = msg.value, style = MiuixTheme.textStyles.body2)
             Spacer(modifier = Modifier.height(12.dp))
             TextButton(
-                text = "???? root",
+                text = "一键临时 root",
                 onClick = {
                     val main = android.os.Handler(android.os.Looper.getMainLooper())
                     msg.value = "????"
