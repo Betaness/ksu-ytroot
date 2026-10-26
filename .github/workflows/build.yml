@@ -12,29 +12,23 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.7.1'
-      - name: clone and rename
+      - name: clone and overlay
         run: |
           git clone --depth 1 https://github.com/tiann/KernelSU.git ksu
           D=ksu/manager/app/src/main/java/me/weishu/kernelsu/ui/screen/home
           cp HomeMiuix.kt $D/HomeMiuix.kt
           grep -c TempRootCard $D/HomeMiuix.kt
           sed -i 's/extra\["androidCompileSdkVersionMinor"\] = 0/extra["androidCompileSdkVersionMinor"] = 2/' ksu/manager/build.gradle.kts
-          sed -i 's/applicationId = "me.weishu.kernelsu"/applicationId = "org.fujiang.ytksu"/' ksu/manager/app/build.gradle.kts
-          grep -rn "applicationId" ksu/manager/app/build.gradle.kts | head -3
-          find ksu/manager/app/src/main/res -name "strings.xml" | head -3
-          sed -i 's#<string name="app_name">[^<]*</string>#<string name="app_name">YT-Root</string>#' ksu/manager/app/src/main/res/values/strings.xml || true
-          grep -n "app_name" ksu/manager/app/src/main/res/values/strings.xml | head -2
       - name: sdk
         run: |
           SDKM=$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager
           yes | $SDKM --licenses >/dev/null 2>&1 || true
           $SDKM "platforms;android-37.2" "build-tools;35.0.0" "ndk;29.0.14206865"
       - name: build
-        continue-on-error: true
         run: |
           cd ksu/manager
-          gradle assembleDebug --no-daemon > /tmp/build.log 2>&1 || true
-          tail -25 /tmp/build.log
+          gradle assembleDebug --no-daemon -PKSU_PACKAGE_NAME=org.fujiang.ytksu -PKSU_NAME=YT-Root > /tmp/build.log 2>&1
+          tail -12 /tmp/build.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
