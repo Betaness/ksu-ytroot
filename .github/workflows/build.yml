@@ -12,24 +12,19 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.7.1'
-      - name: clone and patch
+      - name: clone and overlay
         run: |
-          set -x
-          sed -i 's/\r$//' ytroot.patch
-          git clone --depth 1 https://github.com/tiann/KernelSU.git ksu || true
-          cd ksu
-          git log --oneline -1
-          (git apply --verbose --ignore-whitespace ../ytroot.patch 2>&1 | tee /tmp/patch.log) || true
-          echo "--- patch.log ---"; cat /tmp/patch.log || true
-          grep -c TempRootCard manager/app/src/main/java/me/weishu/kernelsu/ui/screen/home/HomeMiuix.kt || echo "PATCH NOT APPLIED"
-          sed -i 's/extra\["androidCompileSdkVersionMinor"\] = 0/extra["androidCompileSdkVersionMinor"] = 2/' manager/build.gradle.kts
+          git clone --depth 1 https://github.com/tiann/KernelSU.git ksu
+          D=ksu/manager/app/src/main/java/me/weishu/kernelsu/ui/screen/home
+          cp HomeMiuix.kt $D/HomeMiuix.kt
+          grep -c TempRootCard $D/HomeMiuix.kt
+          sed -i 's/extra\["androidCompileSdkVersionMinor"\] = 0/extra["androidCompileSdkVersionMinor"] = 2/' ksu/manager/build.gradle.kts
+          grep -n "CompileSdk" ksu/manager/build.gradle.kts
       - name: sdk
-        continue-on-error: true
         run: |
           SDKM=$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager
           yes | $SDKM --licenses >/dev/null 2>&1 || true
-          $SDKM "platforms;android-37.2" "build-tools;35.0.0" "ndk;29.0.14206865" || true
-          ls $ANDROID_HOME/platforms
+          $SDKM "platforms;android-37.2" "build-tools;35.0.0" "ndk;29.0.14206865"
       - name: build
         continue-on-error: true
         run: |
@@ -42,5 +37,4 @@ jobs:
           name: out
           path: |
             /tmp/build.log
-            /tmp/patch.log
             ksu/manager/app/build/outputs/apk/debug/*.apk
