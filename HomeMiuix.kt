@@ -210,8 +210,10 @@ private fun TempRootCard() {
                             msg.value = "\u6267\u884c\u4e2d\u2026"
                             Thread {
                                 val txt = try {
-                                    val p = rikka.shizuku.Shizuku.newProcess(
-                                        arrayOf("sh", "/data/local/tmp/ytroot"), null, null)
+                                    val m = rikka.shizuku.Shizuku::class.java.getDeclaredMethod(
+                                        "newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java)
+                                    m.isAccessible = true
+                                    val p = m.invoke(null, arrayOf("sh", "/data/local/tmp/ytroot"), null, null) as Process
                                     val out = p.inputStream.bufferedReader().readText()
                                     p.waitFor()
                                     if (p.exitValue() == 0) "READY" else "rc=" + p.exitValue() + " " + out.takeLast(80)
