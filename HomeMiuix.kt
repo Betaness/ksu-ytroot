@@ -205,7 +205,6 @@ private fun rootdExec(cmd: String): String {
     } catch (e: Exception) { "err: " + e.message }
 }
 
-@Composable
 private fun readStateViaRootd(): String {
     val r = rootdExec("cat /data/local/tmp/ytroot.status 2>/dev/null; echo RC=$?")
     return when {
