@@ -208,9 +208,10 @@ private fun rootdExec(cmd: String): String {
 private fun readStateViaRootd(): String {
     val r = rootdExec("cat /data/local/tmp/ytroot.status 2>/dev/null; echo RC=$?")
     return when {
-        r.contains("\"state\":\"ready\"") -> "READY"
+        r.contains("READY") -> "READY"
+        r.contains("state") && r.contains("ready") -> "READY"
         r.startsWith("err:") -> "守护进程未运行（先点模块里的执行）"
-        r.contains("\"state\":\"fail\"") -> "上次执行失败，点按钮重试"
+        r.contains("FAIL") -> "上次执行失败，点按钮重试"
         else -> "点一下执行临时 root"
     }
 }
