@@ -204,9 +204,15 @@ private fun TempRootCard() {
                     msg.value = "执行中…"
                     val main = android.os.Handler(android.os.Looper.getMainLooper())
                     Thread {
-                        val r = com.topjohnwu.superuser.Shell.getShell().newJob()
-                            .add("sh /data/local/tmp/ytroot").exec()
-                        main.post { msg.value = if (r.code == 0) "READY" else "失败，看 /data/local/tmp/ytroot.out" }
+                        val sh = com.topjohnwu.superuser.Shell.getShell()
+                        val txt = if (sh.isRoot) {
+                            val r = sh.newJob().add("sh /data/local/tmp/ytroot").exec()
+                            if (r.code == 0) "READY" else "\u5931\u8d25\uff0c\u770b /data/local/tmp/ytroot.out"
+                        } else {
+                            val st = try { java.io.File("/data/local/tmp/ytroot.status").readText().trim() } catch (e: Exception) { "" }
+                            "\u9700\u8981 root \u624d\u80fd\u63d0\u6743\uff1b\u5f53\u524d\u72b6\u6001: " + st
+                        }
+                        main.post { msg.value = txt }
                     }.start()
                 }
             )
