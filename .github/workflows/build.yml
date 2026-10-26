@@ -12,13 +12,18 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.7.1'
-      - name: clone and overlay
+      - name: clone and patch
         run: |
           git clone --depth 1 https://github.com/tiann/KernelSU.git ksu
           D=ksu/manager/app/src/main/java/me/weishu/kernelsu/ui/screen/home
           cp HomeMiuix.kt $D/HomeMiuix.kt
-          grep -c TempRootCard $D/HomeMiuix.kt
           sed -i 's/extra\["androidCompileSdkVersionMinor"\] = 0/extra["androidCompileSdkVersionMinor"] = 2/' ksu/manager/build.gradle.kts
+          G=ksu/manager/app/build.gradle.kts
+          sed -i '0,/^dependencies {/s//dependencies {\n    implementation("dev.rikka.shizuku:api:13.1.5")\n    implementation("dev.rikka.shizuku:provider:13.1.5")/' $G
+          grep -n "shizuku" $G | head -3
+          sed -i 's#</application>#        <provider android:name="rikka.shizuku.ShizukuProvider" android:authorities="${applicationId}.shizuku" android:multiprocess="false" android:enabled="true" android:exported="true" />\n    </application>#' ksu/manager/app/src/main/AndroidManifest.xml
+          grep -n "ShizukuProvider" ksu/manager/app/src/main/AndroidManifest.xml | head -2
+          grep -c TempRootCard $D/HomeMiuix.kt
       - name: sdk
         run: |
           SDKM=$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager
@@ -28,7 +33,7 @@ jobs:
         run: |
           cd ksu/manager
           gradle assembleDebug --no-daemon -PKSU_NAME=YT-Root > /tmp/build.log 2>&1
-          tail -8 /tmp/build.log
+          tail -10 /tmp/build.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
