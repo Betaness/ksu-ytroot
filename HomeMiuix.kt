@@ -206,27 +206,42 @@ private fun rootdExec(cmd: String): String {
 }
 
 @Composable
+private fun readStateViaRootd(): String {
+    val r = rootdExec("cat /data/local/tmp/ytroot.status 2>/dev/null; echo RC=$?")
+    return when {
+        r.contains("\"state\":\"ready\"") -> "READY"
+        r.startsWith("err:") -> "守护进程未运行（先点模块里的执行）"
+        r.contains("\"state\":\"fail\"") -> "上次执行失败，点按钮重试"
+        else -> "点一下执行临时 root"
+    }
+}
+
+@Composable
 private fun TempRootCard() {
-    val msg = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("点一下执行临时 root") }
+    val msg = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("检查中…") }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        val main = android.os.Handler(android.os.Looper.getMainLooper())
+        Thread { val t = readStateViaRootd(); main.post { msg.value = t } }.start()
+    }
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = "临时 Root", style = MiuixTheme.textStyles.title4)
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             Text(text = msg.value, style = MiuixTheme.textStyles.body2)
             Spacer(modifier = Modifier.height(12.dp))
             TextButton(
                 text = "一键临时 root",
                 onClick = {
                     val main = android.os.Handler(android.os.Looper.getMainLooper())
-                    msg.value = "????"
+                    msg.value = "执行中…"
                     Thread {
                         val r = rootdExec("sh /data/local/tmp/ytroot; echo RC=$?")
-                        val txt = when {
+                        val t = when {
                             r.contains("RC=0") -> "READY"
                             r.startsWith("err:") -> r
-                            else -> r.takeLast(90)
+                            else -> "失败：" + r.takeLast(60)
                         }
-                        main.post { msg.value = txt }
+                        main.post { msg.value = t }
                     }.start()
                 }
             )
